@@ -71,9 +71,9 @@ train:
   lr_scheme: MultiStepLR # TrueCosineAnnealingLR # MultiStepLR
   beta1: 0.9
   beta2: 0.99
-  niter: 1200000
+  niter: 700000
   warmup_iter: -1  # no warm up
-  lr_steps: [100000, 400000, 600000, 800000, 1000000]
+  lr_steps: [100000, 400000, 600000]
   lr_gamma: 0.5
   eta_min: !!float 1e-7
 

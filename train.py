@@ -23,7 +23,6 @@ from data import create_dataloader, create_dataset
 from data.data_sampler import DistIterSampler
 from data.util import bgr2ycbcr
 
-# os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 torch.cuda.empty_cache()
 
@@ -54,7 +53,6 @@ def get_next_batch(data_iter, dataloader):
 
 
 def main():
-    # setup options of three networks***********************************************************************************
     parser = argparse.ArgumentParser()
     parser.add_argument("-opt", type=str, help="Path to option YMAL file.")
     parser.add_argument("--launcher", choices=["none", "pytorch"], default="none", help="job launcher")
@@ -63,10 +61,10 @@ def main():
     opt = option.parse(args.opt, is_train=True)
     opt = option.dict_to_nonedict(opt)
 
-    # seed********************************************************************************************************
+
     seed = opt["train"]["manual_seed"]
 
-    # distributed training settings*************************************************************************************
+
     if args.launcher == "none":
         opt["dist"] = False
         opt["dist"] = False
@@ -83,7 +81,6 @@ def main():
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 
-    # 训练****************************************************************************************************
 
     if opt["path"].get("resume_state", None):
         # distributed resuming: all load into default GPU
@@ -96,7 +93,6 @@ def main():
     else:
         resume_state = None
 
-    # log**************************************************************************************************
     if rank <= 0:  # normal training (rank -1) OR distributed training (rank 0-7)
         if resume_state is None:
             # Predictor path
@@ -150,7 +146,6 @@ def main():
         
         logger = logging.getLogger("base")
 
-    # create train and val dataloader***********************************************************************************
     dataset_ratio = 200  # enlarge the size of each epoch
     for phase, dataset_opt in opt["datasets"].items():
         if phase == "train":
@@ -184,11 +179,10 @@ def main():
     assert train_loader is not None
     assert val_loader is not None
 
-    # create model******************************************************************************************************
+
     model = create_model(opt)
     device = model.device
 
-    # resume training***************************************************************************************************
     if resume_state:
         logger.info("Resuming training from epoch: {}, iter: {}.".format(resume_state["epoch"], resume_state["iter"]))
         print("Resuming training from epoch: {}, iter: {}.".format(resume_state["epoch"], resume_state["iter"]))
@@ -199,7 +193,6 @@ def main():
         current_step = 0
         start_epoch = 0
 
-    # create SDE-Solver*************************************************************************************************
     timestep = False
     if opt["network_G"]["which_model_G"] == "ConditionalUNet":
         timestep = True
@@ -213,7 +206,6 @@ def main():
     timesteps_ode = opt["timesteps_ode"]  # [1, 2, 3, 4, 5]
     # scale = opt['degradation']['scale']
 
-    # training**********************************************************************************************************
     logger.info("Start training from epoch: {:d}, iter: {:d}".format(start_epoch, current_step))
     print("Start training from epoch: {:d}, iter: {:d}".format(start_epoch, current_step))
     best_psnr = 0.0
@@ -250,7 +242,6 @@ def main():
                     logger.info(message)
                     print(message)
 
-            # validation, to produce ker_map_list(fake)*****************************************************************
             if current_step % opt["train"]["val_freq"] == 0 and rank <= 0:
                 avg_psnr = 0.0
                 idx = 0.0
@@ -294,10 +285,8 @@ def main():
             if error.value:
                 sys.exit(0)
 
-            # save models and training states***************************************************************************
             if current_step % opt["logger"]["save_checkpoint_freq"] == 0:
                 if rank <= 0:
-                # if rank <= 0 and current_step >= 50000:
                     logger.info("Saving models and training states.")
                     print("Saving models and training states.")
                     model.save(current_step)

@@ -4,15 +4,14 @@ use_tb_logger: true
 model: Rectified_Flow
 distortion: haze
 gpu_ids: [0]
-timesteps_ode: [1]  # 确保 timesteps 是一个列表
-
+timesteps_ode: [1] # 确保 timesteps 是一个列表
 
 sde:
   T: 1000
   schedule: linear # linear, cosine
 
 method:
-  isXT: True  # True
+  isXT: True # True
   base: False
   weighta: 0.3
 
@@ -25,7 +24,7 @@ datasets:
     dataroot_LQ: /gdata2/fanzh/RESIDE-6K/train/hazy
 
     use_shuffle: true
-    n_workers: 1  # per GPU
+    n_workers: 1 # per GPU
     batch_size: 8
     GT_size: 256 #256
     LR_size: 256 #256
@@ -37,7 +36,7 @@ datasets:
     mode: LQGT
     dataroot_GT: /gdata2/fanzh/RESIDE-6K/test/GT
     dataroot_LQ: /gdata2/fanzh/RESIDE-6K/test/hazy
-    
+
     batch_size: 1
     # GT_size: 256
     # LR_size: 256
@@ -45,16 +44,14 @@ datasets:
     use_rot: false
     color: RGB
 
-
 # ##### network structures
 network_G:
- which_model_G: ConditionalUNet # ConditionalUNet
- setting:
-   in_nc: 3
-   out_nc: 3
-   nf: 64
-   depth: 4
-
+  which_model_G: ConditionalUNet # ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 64
+    depth: 4
 
 #### path
 path:
@@ -62,7 +59,6 @@ path:
   strict_load: true
   resume_state: ~
   experiments_root: /gdata2/fanzh/results
-
 
 #### training settings: learning rate scheme, loss
 train:
@@ -72,7 +68,7 @@ train:
   beta1: 0.9
   beta2: 0.99
   niter: 700000
-  warmup_iter: -1  # no warm up
+  warmup_iter: -1 # no warm up
   lr_steps: [200000, 400000, 600000]
   lr_gamma: 0.5
   eta_min: !!float 1e-7
@@ -84,7 +80,6 @@ train:
 
   manual_seed: 0
   val_freq: !!float 1e4
-
 
 #### logger
 logger:

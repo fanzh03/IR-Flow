@@ -47,6 +47,7 @@ class IRSDE(SDE):
     """
     Let timestep t start from 0 to T
     """
+
     def __init__(self, T=1000, device=None):
         super().__init__(T, device)
         self.model = None
@@ -106,26 +107,29 @@ class IRSDE(SDE):
         if num == 1:
             choices = [(1.0, torch.tensor(1000).long())]
         if num == 2:
-            choices = [(0.8, torch.tensor(1000).long()), (1.0, torch.tensor(200).long())]
+            choices = [(0.8, torch.tensor(1000).long()),
+                       (1.0, torch.tensor(200).long())]
         if num == 3:
-            choices = [(0.8, torch.tensor(1000).long()), (0.5, torch.tensor(200).long()), (1.0, torch.tensor(100).long())]
+            choices = [(0.8, torch.tensor(1000).long()), (0.5, torch.tensor(
+                200).long()), (1.0, torch.tensor(100).long())]
         if num == 4:
             choices = [(0.5, torch.tensor(1000).long()),
                        (0.5, torch.tensor(500).long()), (0.8, torch.tensor(250).long()), (1.0, torch.tensor(50).long())]
         if num == 100:
             step = 1000 / num
-            choices = [((1.0/num)/(1-(1.0/num)*i), torch.tensor(1000 - i*step).long()) for i in range(num)]
+            choices = [((1.0/num)/(1-(1.0/num)*i),
+                        torch.tensor(1000 - i*step).long()) for i in range(num)]
         return choices
-    
+
     def euler_1_order(self, x, num):
         x_i = x
-        if num in {2,3,4}:
+        if num in {2, 3, 4}:
             timesteps_list = self.select_timesteps_nolinear(num)
             for step in timesteps_list:
                 t = step[1].unsqueeze(0)
                 score = self.score_fn(x_i, t)
                 x_i = x_i - score * step[0]
-        else: 
+        else:
             h = 1000 / num
             for i in list(reversed(range(1, num + 1))):
                 w_i = 1 / i
@@ -142,8 +146,10 @@ class IRSDE(SDE):
             t_i = torch.tensor(1000).long().unsqueeze(0)
             d_i = self.score_fn(x_i, t_i)
             x_mid = x_i - (1 / num) * d_i
-            t_i_delta1 = torch.tensor((1 / num) * 1000 + deltaT).long().unsqueeze(0)
-            t_i_delta2 = torch.tensor((1 / num) * 1000 - deltaT).long().unsqueeze(0)
+            t_i_delta1 = torch.tensor(
+                (1 / num) * 1000 + deltaT).long().unsqueeze(0)
+            t_i_delta2 = torch.tensor(
+                (1 / num) * 1000 - deltaT).long().unsqueeze(0)
             d_i_delta1 = self.score_fn(x_mid, t_i_delta1)
             d_i_delta2 = self.score_fn(x_mid, t_i_delta2)
             x_i_next = x_mid - 0.5 * (d_i_delta1 + d_i_delta2)
@@ -161,16 +167,16 @@ class IRSDE(SDE):
                 d_i_hat = self.score_fn(x_i_hat, t_i_hat)
                 x_i_next = x_i - (w_i / 2) * (d_i + d_i_hat)
         return x_i_next
-    
+
     def standard_euler(self, x, T=-1):
         dt = 1 / T
         xt = x.clone()
         h = 1000 / T
-        for i in list(reversed(range(1, T + 1))):  
-            num_t = i / T     
+        for i in list(reversed(range(1, T + 1))):
+            num_t = i / T
             t = torch.tensor(i * h).long().unsqueeze(0)
             pred = self.score_fn(xt, t)
-            xt = xt - pred * dt   
+            xt = xt - pred * dt
         return xt
 
     def reverse_ode(self, xt, T=-1, solver="Euler-1", **kwargs):
@@ -205,7 +211,8 @@ class IRSDE(SDE):
 
         def ode_func(t, x):
             t = int(t)
-            x = from_flattened_numpy(x, shape).to(self.device).type(torch.float32)
+            x = from_flattened_numpy(x, shape).to(
+                self.device).type(torch.float32)
             score = self.score_fn(x, t)
             drift = self.ode_reverse_drift(x, score, t)
             return to_flattened_numpy(drift)
@@ -214,15 +221,16 @@ class IRSDE(SDE):
         solution = integrate.solve_ivp(ode_func, (eps, self.T), to_flattened_numpy(xt),
                                        rtol=rtol, atol=atol, method=method)
 
-        x = torch.tensor(solution.y[:, -1]).reshape(shape).to(self.device).type(torch.float32)
+        x = torch.tensor(
+            solution.y[:, -1]).reshape(shape).to(self.device).type(torch.float32)
 
         return x
 
-    # ******************************************************************************************************************
     # sample states for training
     def generate_random_timesteps(self, gt):
         gt = gt.to(self.device)
         batch = gt.shape[0]
-        timesteps = torch.randint(0, self.T + 1, (batch, 1, 1, 1)).long()  # 0~1000
+        timesteps = torch.randint(
+            0, self.T + 1, (batch, 1, 1, 1)).long()  # 0~1000
 
         return timesteps
